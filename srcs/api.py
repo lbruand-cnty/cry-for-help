@@ -124,6 +124,7 @@ def get_project_info(project_name: str):
             'createDate': Project creation datetime, str,
             'description': Project description, str,
             'label': List of labels defined, List[str],
+            'label_shortcut': List of label shortcuts defined, List[str]
             'progress': Number of labeled data in current project, str,
         }
     """
@@ -131,6 +132,8 @@ def get_project_info(project_name: str):
     selected_df = df.loc[df.project == project_name].reset_index()
     label = selected_df.label[0]
     label = [] if str(label) == 'nan' else label.split(':sep:')
+    label_shortcut = selected_df.label_shortcut[0]
+    label_shortcut = [] if str(label_shortcut) == 'nan' else label_shortcut.split(':sep:')
     # get proportion of labeled data
     try:
         df = pd.read_csv(os.path.join(PROJECT_DIR, project_name, 'data.csv'))
@@ -144,6 +147,7 @@ def get_project_info(project_name: str):
         'createDate': selected_df.createDate[0],
         'description': selected_df.description[0],
         'label': label,
+        'label_shortcut': label_shortcut,
         'progress': progress,
     }
 
@@ -185,6 +189,7 @@ def create_project(project_name: str):
         'createDate': [str(datetime.now()).split('.')[0][:-3]],
         'description': ['Add description at here.'],  # default description
         'label': None,  # default label
+        'label_shortcut': None
     }
     df_to_append = pd.DataFrame(to_append)
     try:
@@ -248,6 +253,7 @@ def update_project_info(project_name):
         'createDate': Project creation datetime, str,
         'description': Project description, str,
         'label': List of defined labels, List[str],
+        'label_shortcut': List of defined labels, List[str],
     }
 
     Args:
@@ -256,10 +262,12 @@ def update_project_info(project_name):
     new_info = request.get_json()
     new_description = new_info['description']
     new_label = ':sep:'.join(new_info['label'])
+    new_label_shortcuts = ':sep:'.join(new_info['label_shortcut'])
     df = pd.read_csv(os.path.join(PROJECT_DIR, 'projects.csv'))
     id = df.project == project_name
     df.loc[id, 'description'] = new_description
     df.loc[id, 'label'] = new_label
+    df.loc[id, 'label_shortcut'] = new_label_shortcuts
     df.to_csv(os.path.join(PROJECT_DIR, 'projects.csv'), index=False)
     return {'success': True}, 200, {'ContentType': 'application/json'}
 

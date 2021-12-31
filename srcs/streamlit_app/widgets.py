@@ -9,18 +9,20 @@ def add_label():
     An expander widget to add label. Enter new label in the text area then click
     "Add" button to add the new label.
     """
-    def submit_add(expander, label):
+    def submit_add(expander, label, label_shortcut):
         if new_label in st.session_state.project_info['label']:
             expander.warning(f'The label "{new_label}" is already exist.')
         else:
             st.session_state.project_info['label'].append(label)
+            st.session_state.project_info['label_shortcut'].append(label_shortcut)
             app_utils.update_project_info()
 
     expander = st.expander('Add label')
     with expander:
         new_label = st.text_input('Define new label:')
+        new_label_shortcut = st.text_input('Define new shortcut:')
         st.button('Add', key='button_submit_define_label', on_click=submit_add,
-                  args=(expander, new_label, ))
+                  args=(expander, new_label, new_label_shortcut))
 
 
 def add_project():
@@ -105,7 +107,7 @@ def export_data():
         return st.empty()
 
 
-def label_data():
+def label_data(key=''):
     """
     Checkboxes to label data. Click or unclick a label to add or delete a label
     then click the "Verify" button for verification.
@@ -114,15 +116,23 @@ def label_data():
         app_utils.update_label_data(updates)
 
     labels = st.session_state.project_info['label']
+    label_shortcuts = st.session_state.project_info['label_shortcut']
     current_label = st.session_state.data['label']
     st.write('')  # an empty line to make spacing
     checkboxes = []
-    for label in labels:
-        pre_checked = True if label in current_label else False
-        checkboxes.append(st.checkbox(label, pre_checked, f'label_{label}'))
+
+
+    for label, shortcut in zip(labels, label_shortcuts):
+        pre_checked = True if (label in current_label) else False
+        labelName = f"{label} ({shortcut})"
+        if key == shortcut:
+            pre_checked = not(pre_checked)
+        checkboxes.append(st.checkbox(labelName, pre_checked, f'label_{label}'))
 
     # capture any changes to the label checkboxes
-    new_labels = [labels[i] for i in range(len(labels)) if checkboxes[i]]
+
+
+    new_labels = [labels[i] for i in range(len(labels)) if checkboxes[i] ]
     # display a submit button if any label checkboxes is changed
     if set(new_labels) != set(current_label):
         st.button('Verify', key='button_submit_label_data',

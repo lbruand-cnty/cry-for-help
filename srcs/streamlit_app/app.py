@@ -75,16 +75,25 @@ def main():
     with left_column:
         st.title('Text Classification Data')
         if st.session_state.current_project is not None:
-            current_page = st.session_state.current_page
+
+            key = st.keypress()
+            st.write(f"key =[{key}]")
             data = app_utils.get_data()
             st.session_state.data = data
+
+            if key == 'a' and st.session_state.current_page >= 1:
+                st.session_state.current_page -= 1
+            if key == 'z' and st.session_state.current_page < data['total'] - 1:
+                st.session_state.current_page += 1
+            current_page = st.session_state.current_page
+
             if data['total'] > 0:
                 st.write(templates.page_number_html(st.session_state.current_project, current_page, data['total']),
                          unsafe_allow_html=True)
                 st.write(templates.text_data_html(data['text']), unsafe_allow_html=True)
                 # display checkboxes for labeling
                 if len(st.session_state.project_info['label']) > 0:
-                    widgets.label_data()
+                    widgets.label_data(key)
                 else:
                     st.write(templates.no_label_html(), unsafe_allow_html=True)
                 # display the verification datetime
@@ -100,7 +109,7 @@ def main():
     if st.session_state.current_project is not None:
         # display list of defined labels
         label_list_holder.write(
-            templates.label_list_html(st.session_state.project_info['label']),
+            templates.label_list_html(st.session_state.project_info['label']), # TODO: Added label_shortcuts here.
             unsafe_allow_html=True,
         )
         # display progress bar if there is data (not None)
