@@ -83,8 +83,10 @@ def main():
 
             if key == 'a' and st.session_state.current_page >= 1:
                 st.session_state.current_page -= 1
+                data = app_utils.get_data() # If we have moved, need to reload data.
             if key == 'z' and st.session_state.current_page < data['total'] - 1:
                 st.session_state.current_page += 1
+                data = app_utils.get_data() # If we have moved, need to reload data.
             current_page = st.session_state.current_page
 
             if data['total'] > 0:
