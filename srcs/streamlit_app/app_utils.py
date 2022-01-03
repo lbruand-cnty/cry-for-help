@@ -165,7 +165,8 @@ def update_label_data(new_labels: List[str], url: str = None):
 
     url = f'{url}/{st.session_state.current_project}/{st.session_state.current_page}'
     verified = str(datetime.now()).split('.')[0][:-3] if len(new_labels) > 0 else '0'
-    data = {'new_labels': new_labels, 'verified': verified}
+    queue = 'test' # TODO : This depends on which phase of the annotation project we are in.
+    data = {'new_labels': new_labels, 'verified': verified, 'queue': queue}
     # add new labels to unlabeled data
     if st.session_state.data['verified'] == '0':
         new_progress = f'{int(st.session_state.project_info["progress"]) + 1}'

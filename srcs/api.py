@@ -33,6 +33,7 @@ def add_text_data(project_name: str):
     new_data = request.get_json()
     new_data['verified'] = ['0'] * len(new_data['texts'])
     new_data['label'] = None
+    new_data['queue'] = None
     df = pd.DataFrame(new_data)
     df.to_csv(os.path.join(PROJECT_DIR, project_name, 'data.csv'), index=False)
     return {'success': True}, 200, {'ContentType': 'application/json'}
@@ -63,10 +64,12 @@ def download_data(project_name: str, all_or_labeled: str):
     df['label'] = df['label'].apply(lambda x: str(x).replace(':sep:', ', '))
     text = df.texts.to_list()
     verified = df.verified.to_list()
+    queue = df.queue.to_list()
     label = df.label.to_list()
     return {
         'text': text,
         'verified': verified,
+        'queue': queue,
         'label': label,
     }
 
@@ -95,17 +98,20 @@ def get_data(project_name: str, current_page: int):
         current_page = min(total - 1, current_page)
         text = df.texts.iloc[current_page]
         verified = str(df.verified.iloc[current_page])
+        queue = str(df.queue.iloc[current_page])
         label = str(df.label.iloc[current_page])
         label = [] if label == 'nan' else label.split(':sep:')
     except FileNotFoundError:
         total = 0
         text = None
         verified = None
+        queue = None
         label = None
     return {
         'total': total,
         'text': text,
         'verified': verified,
+        'queue': queue,
         'label': label,
     }
 
@@ -236,8 +242,10 @@ def update_label_data(project_name: str, current_page: int):
     """
     new_labels = request.get_json()['new_labels']
     verified = request.get_json()['verified']
+    queue = request.get_json()['queue']
     df = pd.read_csv(os.path.join(PROJECT_DIR, project_name, 'data.csv'))
     df.verified.iloc[current_page] = verified
+    df.queue.iloc[current_page] = queue
     df.label.iloc[current_page] = ':sep:'.join(new_labels)
     df.to_csv(os.path.join(PROJECT_DIR, project_name, 'data.csv'), index=False)
     return {'success': True}, 200, {'ContentType': 'application/json'}
