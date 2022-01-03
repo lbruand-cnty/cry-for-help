@@ -148,12 +148,13 @@ def load_projects(url: str = None) -> List[str]:
     return r.json()['projects']
 
 
-def update_label_data(new_labels: List[str], url: str = None):
+def update_label_data(new_labels: List[str], queue: str = 'test', url: str = None):
     """
     Send a put request to update the labels of the labeled data.
 
     Args:
         new_labels (List[str]): List of selected labels.
+        queue (str): the queue in which to put the example.
         url (str, optional): API address.
     """
     headers = {
@@ -165,7 +166,6 @@ def update_label_data(new_labels: List[str], url: str = None):
 
     url = f'{url}/{st.session_state.current_project}/{st.session_state.current_page}'
     verified = str(datetime.now()).split('.')[0][:-3] if len(new_labels) > 0 else '0'
-    queue = 'test' # TODO : This depends on which phase of the annotation project we are in.
     data = {'new_labels': new_labels, 'verified': verified, 'queue': queue}
     # add new labels to unlabeled data
     if st.session_state.data['verified'] == '0':

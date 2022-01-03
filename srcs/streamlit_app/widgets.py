@@ -113,7 +113,8 @@ def label_data(key=''):
     then click the "Verify" button for verification.
     """
     def submit_verify(updates):
-        app_utils.update_label_data(updates)
+        queue = 'test' # TODO: this should be set depending on the phase of the project we are in.
+        app_utils.update_label_data(updates, queue=queue)
 
     labels = st.session_state.project_info['label']
     label_shortcuts = st.session_state.project_info['label_shortcut']
