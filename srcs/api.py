@@ -5,7 +5,7 @@ from datetime import datetime
 from flask import Flask, request
 from flask_cors import cross_origin
 from flask_restful import Api
-
+import ml_api
 from srcs import utils
 
 CONFIG = utils.load_yaml('./config.yaml')
@@ -94,7 +94,7 @@ def get_data(project_name: str, current_page: int):
     """
     try:
         df = pd.read_csv(os.path.join(PROJECT_DIR, project_name, 'data.csv'))
-        total = len(df)
+        total = len(df)  # TODO : This should be a project wide info
         current_page = min(total - 1, current_page)
         text = df.texts.iloc[current_page]
         verified = str(df.verified.iloc[current_page])
@@ -249,6 +249,28 @@ def update_label_data(project_name: str, current_page: int):
     df.label.iloc[current_page] = ':sep:'.join(new_labels)
     df.to_csv(os.path.join(PROJECT_DIR, project_name, 'data.csv'), index=False)
     return {'success': True}, 200, {'ContentType': 'application/json'}
+
+@app.route(f'{API_ENDPOINTS["SAMPLE_DATA"]}/<project_name>', methods=['POST'])
+@cross_origin()
+def sample_data(project_name):
+    df = pd.read_csv(os.path.join(PROJECT_DIR, project_name, 'data.csv'))
+    df_train = df[df.queue == "train"] # TODO : Hardcoded values should be params.
+    df_test = df[df.queue == "test"]
+    df_unlabeled = df[~df.queue.isin(["train", "test"])]
+    print(f" len(df_train) = {len(df_train)}")
+    print(f" len(df_test) = {len(df_test)}")
+    print(f" len(df_unlabeled) = {len(df_unlabeled)}")
+    ml_api.train_model(df_train, df_test)
+    df = pd.concat(
+        [sample_unlabeled_data(df_unlabeled),  #  TODO : This needs to be done using the model + sampling + oultliers.
+         df_train,
+         df_test])
+    df.to_csv(os.path.join(PROJECT_DIR, project_name, 'data.csv'), index=False)
+    return {'success': True}, 200, {'ContentType': 'application/json'}
+
+
+def sample_unlabeled_data(df_unlabeled):
+    return df_unlabeled.sample(frac=1).reset_index(drop=True)
 
 
 @app.route(f'{API_ENDPOINTS["UPDATE_PROJECT_INFO"]}/<project_name>', methods=['POST'])

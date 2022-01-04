@@ -148,7 +148,7 @@ def load_projects(url: str = None) -> List[str]:
     return r.json()['projects']
 
 
-def update_label_data(new_labels: List[str], queue: str = 'test', url: str = None):
+def update_label_data(new_labels: List[str], url: str = None):
     """
     Send a put request to update the labels of the labeled data.
 
@@ -166,23 +166,46 @@ def update_label_data(new_labels: List[str], queue: str = 'test', url: str = Non
 
     url = f'{url}/{st.session_state.current_project}/{st.session_state.current_page}'
     verified = str(datetime.now()).split('.')[0][:-3] if len(new_labels) > 0 else '0'
+    progress = int(st.session_state.project_info["progress"])
+    if progress < 10:
+        queue: str = 'test'
+    elif progress < 30:
+        queue: str = 'train'
+    else:
+        queue: str = 'train'
+
     data = {'new_labels': new_labels, 'verified': verified, 'queue': queue}
     # add new labels to unlabeled data
     if st.session_state.data['verified'] == '0':
-        new_progress = f'{int(st.session_state.project_info["progress"]) + 1}'
+        new_progress = f'{progress + 1}'
     # remove all labels from labeled data
     elif len(new_labels) == 0:
-        new_progress = f'{int(st.session_state.project_info["progress"]) - 1}'
+        new_progress = f'{progress - 1}'
     # change labels of labeled data
     else:
         new_progress = st.session_state.project_info['progress']
 
     r = requests.put(url, data=json.dumps(data), headers=headers)
+
+    # TODO : retrain/shuffle data if need be (do not do that everytime).
+    sample_data()
+
     # update label and progress status into session state
-    st.session_state.data['label'] = new_labels
-    st.session_state.data['verified'] = verified
+
+    st.session_state.data = get_data()
     st.session_state.project_info['progress'] = new_progress
 
+def sample_data(url: str =None):
+    headers = {
+        'content-type': 'application/json',
+        'Accept-Charset': 'UTF-8',
+    }
+    if url is None:
+        url = os.environ['API_ADDRESS'] + os.environ['SAMPLE_DATA']
+
+    url = f'{url}/{st.session_state.current_project}'
+    r = requests.post(url, data=json.dumps(st.session_state.project_info),
+                      headers=headers)
 
 def update_project_info(url: str = None):
     """
