@@ -1,5 +1,6 @@
 import pandas as pd
 import streamlit as st
+import hashlib
 
 from srcs.streamlit_app import app_utils
 
@@ -106,29 +107,34 @@ def export_data():
 
         return st.empty()
 
+def hash(t: str) -> str:
+    sha = hashlib.sha256()
+    sha.update(t.encode())
+    return sha.hexdigest()
 
-def label_data(key=''):
+def label_data(keypressed=''):
     """
     Checkboxes to label data. Click or unclick a label to add or delete a label
     then click the "Verify" button for verification.
     """
     def submit_verify(updates):
         queue = 'test' # TODO: this should be set depending on the phase of the project we are in.
-        app_utils.update_label_data(updates, queue=queue)
+        app_utils.update_label_data(updates)
 
     labels = st.session_state.project_info['label']
     label_shortcuts = st.session_state.project_info['label_shortcut']
     current_label = st.session_state.data['label']
-    st.write('')  # an empty line to make spacing
+    st.write(f"{current_label}")  # an empty line to make spacing
+
     checkboxes = []
-
-
     for label, shortcut in zip(labels, label_shortcuts):
         pre_checked = True if (label in current_label) else False
         labelName = f"{label} ({shortcut})"
-        if key == shortcut:
+        if keypressed == shortcut:
             pre_checked = not(pre_checked)
-        checkboxes.append(st.checkbox(labelName, pre_checked, f'label_{label}'))
+        hashhex = hash(st.session_state.data['text'])
+        checkbox = st.checkbox(label=labelName, value=pre_checked, key=f'label_{hashhex[:16]}_{label}')
+        checkboxes.append(checkbox)
 
     # capture any changes to the label checkboxes
 
