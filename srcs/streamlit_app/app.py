@@ -76,17 +76,18 @@ def main():
         st.title('Text Classification Data')
         if st.session_state.current_project is not None:
 
-            key = st.keypress()
-            st.write(f"key =[{key}]")
+            keypressed = st.keypress()
+            st.write(f"keypressed =[{keypressed}]")
             data = app_utils.get_data()
-            st.session_state.data = data
 
-            if key == 'a' and st.session_state.current_page >= 1:
+            if keypressed == 'a' and st.session_state.current_page >= 1:
                 st.session_state.current_page -= 1
                 data = app_utils.get_data() # If we have moved, need to reload data.
-            if key == 'z' and st.session_state.current_page < data['total'] - 1:
+            elif keypressed == 'z' and st.session_state.current_page < data['total'] - 1:
                 st.session_state.current_page += 1
                 data = app_utils.get_data() # If we have moved, need to reload data.
+
+            st.session_state.data = data
             current_page = st.session_state.current_page
 
             if data['total'] > 0:
@@ -95,7 +96,7 @@ def main():
                 st.write(templates.text_data_html(data['text']), unsafe_allow_html=True)
                 # display checkboxes for labeling
                 if len(st.session_state.project_info['label']) > 0:
-                    widgets.label_data(key)
+                    widgets.label_data(keypressed)
                 else:
                     st.write(templates.no_label_html(), unsafe_allow_html=True)
                 # display the verification datetime
