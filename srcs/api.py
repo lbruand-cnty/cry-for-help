@@ -135,6 +135,10 @@ def get_project_info(project_name: str):
             'progress': Number of labeled data in current project, str,
         }
     """
+    return inner_get_project_info(project_name)
+
+
+def inner_get_project_info(project_name):
     df = pd.read_csv(os.path.join(PROJECT_DIR, 'projects.csv'))
     selected_df = df.loc[df.project == project_name].reset_index()
     label = selected_df.label[0]
@@ -254,10 +258,9 @@ def update_label_data(project_name: str, current_page: int):
 @app.route(f'{API_ENDPOINTS["SAMPLE_DATA"]}/<project_name>', methods=['POST'])
 @cross_origin()
 def sample_data(project_name):
-    project_info = get_project_info(project_name)
+    project_info = inner_get_project_info(project_name)
     labels = project_info["label"]
     print(f"labels = {labels}")
-    label_list = labels.split(",")
     df = pd.read_csv(os.path.join(PROJECT_DIR, project_name, 'data.csv'))
     df_train = df[df.queue == "train"] # TODO : Hardcoded values should be params.
     df_test = df[df.queue == "test"]
@@ -268,7 +271,8 @@ def sample_data(project_name):
 
     df = pd.concat(
         [
-            *list(sample_unlabeled_data(df_unlabeled, df_train, df_test, label_list)),  #  TODO : This needs to be done using the model + sampling + oultliers.
+            *list(sample_unlabeled_data(df_unlabeled, df_train, df_test, labels)),
+            # TODO : This needs to be done using the model + sampling + oultliers.
             df_train,
             df_test
         ])
