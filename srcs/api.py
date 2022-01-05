@@ -272,7 +272,7 @@ def sample_data(project_name):
     return {'success': True}, 200, {'ContentType': 'application/json'}
 
 
-def sample_unlabeled_data(df_unlabeled, df_train, df_test):
+def sample_unlabeled_data(df_unlabeled, df_train, df_test): # TODO : move this ml_api.
     global mlapi
     print(" == sample_unlabeled_data ==")
     if mlapi is None:
@@ -283,11 +283,13 @@ def sample_unlabeled_data(df_unlabeled, df_train, df_test):
                              num_labels=2,
                              vocab_size=len(feature_index))
         mlapi.feature_index = feature_index
-
+    # TODO : Train every n labels.
     mlapi.train_model(training_data=df_train,
                       test_data=df_test,)
     df = df_unlabeled.sample(frac=1).reset_index(drop=True)
     df_result = mlapi.get_low_conf_unlabeled(df)
+    # TODO: Add outliers.
+    # TODO: Random stuff.
     return df_result
 
 

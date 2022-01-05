@@ -67,7 +67,7 @@ class MLApi:
                 #item[3] = "random_remaining"
                 print(item)
                 text = item.texts
-
+                # TODO : This should be do over the unlabeled set in batching.
                 feature_vector = self.make_feature_vector(text.split(), self.feature_index)
                 log_probs = self.model(feature_vector)
 
@@ -98,8 +98,6 @@ class MLApi:
 
         Xtrain, Ytrain = self.build_tensors(training_data)
         Xtest, Ytest = self.build_tensors(test_data)
-
-
 
         data_set = Data(Xtrain, Ytrain)
         trainloader = DataLoader(dataset=data_set, batch_size=64)
