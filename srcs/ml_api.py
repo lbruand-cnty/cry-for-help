@@ -72,7 +72,7 @@ class MLApi:
                 log_probs = self.model(feature_vector)
 
                 # get confidence that it is related
-                prob_related = math.exp(log_probs.data.tolist()[0][1])
+                prob_related = math.exp(log_probs.data.tolist()[0][1])  # TODO : Check how it is defined.
 
                 if prob_related < 0.5:
                     confidence = 1 - prob_related
@@ -86,7 +86,6 @@ class MLApi:
         unlabeled_data_limited["confidence"] = confidences
         unlabeled_data_limited.sort_values(by=["confidence"], inplace=True)
         unlabeled_data_limited = unlabeled_data_limited.drop(columns=["confidence"]) # TODO : Keep the confidence for future use.
-        print(unlabeled_data_limited)
 
         return unlabeled_data_limited, rest
 
@@ -106,7 +105,7 @@ class MLApi:
         trainloader = DataLoader(dataset=data_set, batch_size=64)
         print(data_set.y.shape)
         criterion = nn.CrossEntropyLoss()
-        self.model = Net(Xtrain.shape[-1], 32, Ytrain.shape[-1])  # TODO : Work on probits.
+        self.model = Net(Xtrain.shape[-1], 32, Ytrain.shape[-1])  # TODO : Work with probits. ?
 
         learning_rate = 0.01
         optimizer = torch.optim.SGD(self.model.parameters(), lr=learning_rate)
@@ -173,7 +172,3 @@ class Net(nn.Module):
         x = torch.sigmoid(self.linear1(x))
         x = self.linear2(x)
         return x
-
-
-def train_model(df_train, df_test):
-    print("train model")
