@@ -21,12 +21,12 @@ class MLApi:
         self.vocab_size = vocab_size
 
 
-    def create_features(self, df_unlabeled, df_training_data, minword=3):
+    def create_features(self, df_unlabeled, df_train, minword=3):
         """Create indexes for one-hot encoding of words in files
 
         """
         total_training_words = {}
-        for item in df_unlabeled + df_training_data:
+        for item in df_unlabeled + df_train:
             text = item
             for word in text.split():
                 if word not in total_training_words:
@@ -35,12 +35,13 @@ class MLApi:
                     total_training_words[word] += 1
 
         feature_index = {}
-        for item in df_unlabeled + df_training_data:
+        for item in df_unlabeled + df_train:
             text = item
             for word in text.split():
                 if word not in feature_index and total_training_words[word] >= minword:
                     feature_index[word] = len(feature_index)
         self.feature_index = feature_index
+        self.vocab_size = len(feature_index)
         return feature_index
 
     def make_feature_vector(self, features, feature_index):
@@ -72,7 +73,7 @@ class MLApi:
                 log_probs = self.model(feature_vector)
 
                 # get confidence that it is related
-                prob_related = math.exp(log_probs.data.tolist()[0][1])  # TODO : Check how it is defined.
+                prob_related = math.exp(log_probs.data.tolist()[0][1])  # TODO : This is not working really.
 
                 if prob_related < 0.5:
                     confidence = 1 - prob_related

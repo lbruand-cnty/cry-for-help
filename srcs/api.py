@@ -278,11 +278,11 @@ def sample_unlabeled_data(df_unlabeled, df_train, df_test): # TODO : move this m
     if mlapi is None:
         mlapi = ml_api.MLApi()
         # TODO : Hardcoded ... make it better.
-        feature_index = {'hello': 0, 'Programmation': 1, 'et': 2, 'développement': 3, 'informatique': 4}
         mlapi = ml_api.MLApi(labels_index={"GRAIT": 0, "GRAMC": 1},
                              num_labels=2,
-                             vocab_size=len(feature_index))
-        mlapi.feature_index = feature_index
+                             )
+        mlapi.create_features(df_unlabeled=df_unlabeled, df_train=df_train)
+
     # TODO : Train every n labels.
     mlapi.train_model(training_data=df_train,
                       test_data=df_test,)
