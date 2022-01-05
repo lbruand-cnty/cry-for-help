@@ -254,6 +254,10 @@ def update_label_data(project_name: str, current_page: int):
 @app.route(f'{API_ENDPOINTS["SAMPLE_DATA"]}/<project_name>', methods=['POST'])
 @cross_origin()
 def sample_data(project_name):
+    project_info = get_project_info(project_name)
+    labels = project_info["label"]
+    print(f"labels = {labels}")
+    label_list = labels.split(",")
     df = pd.read_csv(os.path.join(PROJECT_DIR, project_name, 'data.csv'))
     df_train = df[df.queue == "train"] # TODO : Hardcoded values should be params.
     df_test = df[df.queue == "test"]
@@ -264,7 +268,7 @@ def sample_data(project_name):
 
     df = pd.concat(
         [
-            *list(sample_unlabeled_data(df_unlabeled, df_train, df_test)),  #  TODO : This needs to be done using the model + sampling + oultliers.
+            *list(sample_unlabeled_data(df_unlabeled, df_train, df_test, label_list)),  #  TODO : This needs to be done using the model + sampling + oultliers.
             df_train,
             df_test
         ])
@@ -272,13 +276,14 @@ def sample_data(project_name):
     return {'success': True}, 200, {'ContentType': 'application/json'}
 
 
-def sample_unlabeled_data(df_unlabeled, df_train, df_test): # TODO : move this ml_api.
+def sample_unlabeled_data(df_unlabeled: pd.DataFrame, df_train: pd.DataFrame, df_test: pd.DataFrame, label_list: list[str]): # TODO : move this ml_api.
     global mlapi
     print(" == sample_unlabeled_data ==")
     if mlapi is None:
         mlapi = ml_api.MLApi()
-        # TODO : Hardcoded ... make it better.
-        mlapi = ml_api.MLApi(labels_index={"GRAIT": 0, "GRAMC": 1},
+        # TODO : There is a need to change this when we change the list of labels in the project.
+        label_index: dict[str, int]= dict(list([ (v, k) for k, v in enumerate(label_list)]))
+        mlapi = ml_api.MLApi(labels_index=label_index,
                              num_labels=2,
                              )
         mlapi.create_features(df_unlabeled=df_unlabeled, df_train=df_train)
