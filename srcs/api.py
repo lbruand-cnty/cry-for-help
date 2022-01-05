@@ -17,6 +17,7 @@ app = Flask(__name__)
 app.config['CORS_HEADERS'] = 'Content-Type'
 api = Api(app)
 
+mlapi = None
 
 @app.route(f'{API_ENDPOINTS["ADD_DATA"]}/<project_name>', methods=['PUT'])
 @cross_origin()
@@ -256,21 +257,39 @@ def sample_data(project_name):
     df = pd.read_csv(os.path.join(PROJECT_DIR, project_name, 'data.csv'))
     df_train = df[df.queue == "train"] # TODO : Hardcoded values should be params.
     df_test = df[df.queue == "test"]
-    df_unlabeled = df[~df.queue.isin(["train", "test"])]
+    df_unlabeled = df[ ~df.queue.isin(["train", "test"]) ]
     print(f" len(df_train) = {len(df_train)}")
     print(f" len(df_test) = {len(df_test)}")
     print(f" len(df_unlabeled) = {len(df_unlabeled)}")
-    ml_api.train_model(df_train, df_test)
+
     df = pd.concat(
-        [sample_unlabeled_data(df_unlabeled),  #  TODO : This needs to be done using the model + sampling + oultliers.
-         df_train,
-         df_test])
+        [
+            *list(sample_unlabeled_data(df_unlabeled, df_train, df_test)),  #  TODO : This needs to be done using the model + sampling + oultliers.
+            df_train,
+            df_test
+        ])
     df.to_csv(os.path.join(PROJECT_DIR, project_name, 'data.csv'), index=False)
     return {'success': True}, 200, {'ContentType': 'application/json'}
 
 
-def sample_unlabeled_data(df_unlabeled):
-    return df_unlabeled.sample(frac=1).reset_index(drop=True)
+def sample_unlabeled_data(df_unlabeled, df_train, df_test):
+    global mlapi
+    print(" == sample_unlabeled_data ==")
+    if mlapi is None:
+        mlapi = ml_api.MLApi()
+        # TODO : Hardcoded ... make it better.
+        feature_index = {'hello': 0, 'Programmation': 1, 'et': 2, 'développement': 3, 'informatique': 4}
+        mlapi = ml_api.MLApi(labels_index={"GRAIT": 0, "GRAMC": 1},
+                             num_labels=2,
+                             vocab_size=len(feature_index))
+        mlapi.feature_index = feature_index
+
+    mlapi.train_model(training_data=df_train,
+                      test_data=df_test,)
+    df = df_unlabeled.sample(frac=1).reset_index(drop=True)
+    df_result = mlapi.get_low_conf_unlabeled(df)
+    return df_result
+
 
 
 @app.route(f'{API_ENDPOINTS["UPDATE_PROJECT_INFO"]}/<project_name>', methods=['POST'])

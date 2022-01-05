@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import pandas as pd
 import torch.nn.functional as F
 import torch.optim as optim
 import numpy as np
@@ -49,7 +50,45 @@ class MLApi:
                 vec[feature_index[feature]] += 1
         return vec.view(1, -1)
 
+    def get_low_conf_unlabeled(self, unlabeled_data, number=80, limit=10000):
+        confidences = []
+        if limit == -1:  # we're predicting confidence on *everything* this will take a while
+            print("Get confidences for unlabeled data (this might take a while)")
+        else:
+            # only apply the model to a limited number of items
+            unlabeled_data = unlabeled_data.sample(frac=1).reset_index(drop=True)
+            rest = unlabeled_data[limit:]
+            unlabeled_data_limited = unlabeled_data[:limit]
 
+
+        with torch.no_grad():
+            for idx, item in unlabeled_data_limited.iterrows():
+                #textid = item[0]
+                #item[3] = "random_remaining"
+                print(item)
+                text = item.texts
+
+                feature_vector = self.make_feature_vector(text.split(), self.feature_index)
+                log_probs = self.model(feature_vector)
+
+                # get confidence that it is related
+                prob_related = math.exp(log_probs.data.tolist()[0][1])
+
+                if prob_related < 0.5:
+                    confidence = 1 - prob_related
+                else:
+                    confidence = prob_related
+
+                #item[3] = "low confidence"
+                #item[4] = confidence
+                confidences.append(confidence)
+
+        unlabeled_data_limited["confidence"] = confidences
+        unlabeled_data_limited.sort_values(by=["confidence"], inplace=True)
+        unlabeled_data_limited = unlabeled_data_limited.drop(columns=["confidence"]) # TODO : Keep the confidence for future use.
+        print(unlabeled_data_limited)
+
+        return unlabeled_data_limited, rest
 
     def train_model(self, training_data, test_data=None):
         """Train model on the given training_data
@@ -67,7 +106,7 @@ class MLApi:
         trainloader = DataLoader(dataset=data_set, batch_size=64)
         print(data_set.y.shape)
         criterion = nn.CrossEntropyLoss()
-        self.model = Net(Xtrain.shape[-1], 32, Ytrain.shape[-1])
+        self.model = Net(Xtrain.shape[-1], 32, Ytrain.shape[-1])  # TODO : Work on probits.
 
         learning_rate = 0.01
         optimizer = torch.optim.SGD(self.model.parameters(), lr=learning_rate)
