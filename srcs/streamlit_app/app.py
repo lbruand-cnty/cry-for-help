@@ -77,7 +77,6 @@ def main():
         if st.session_state.current_project is not None:
 
             keypressed = st.keypress()
-            st.write(f"keypressed =[{keypressed}]")
             data = app_utils.get_data()
 
             if keypressed == 'a' and st.session_state.current_page >= 1:
