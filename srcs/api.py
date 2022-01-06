@@ -262,7 +262,7 @@ def sample_data(project_name):
     labels = project_info["label"]
     print(f"labels = {labels}")
     df = pd.read_csv(os.path.join(PROJECT_DIR, project_name, 'data.csv'))
-    df_train = df[df.queue == "train"] # TODO : Hardcoded values should be params.
+    df_train = df[df.queue == "train"] # TODO : Queue names are hardcoded. Maybe we should have config.
     df_test = df[df.queue == "test"]
     df_unlabeled = df[ ~df.queue.isin(["train", "test"]) ]
     print(f" len(df_train) = {len(df_train)}")
@@ -291,15 +291,19 @@ def sample_unlabeled_data(df_unlabeled: pd.DataFrame, df_train: pd.DataFrame, df
                              num_labels=2,
                              )
         mlapi.create_features(df_unlabeled=df_unlabeled, df_train=df_train)
-
-    # TODO : Train every n labels.
-    mlapi.train_model(training_data=df_train,
-                      test_data=df_test,)
-    df = df_unlabeled.sample(frac=1).reset_index(drop=True)
-    df_result = mlapi.get_low_conf_unlabeled(df)
-    # TODO: Add outliers.
-    # TODO: Random stuff.
-    return df_result
+    RETRAIN_EVERYN_VALUE = 5 # TODO: This should go in the configuration.
+    if len(df_train) % RETRAIN_EVERYN_VALUE == 0:
+        # TODO : Train every n labels.
+        mlapi.train_model(training_data=df_train,
+                          test_data=df_test,)
+        df = df_unlabeled.sample(frac=1).reset_index(drop=True)
+        df_result = mlapi.get_low_conf_unlabeled(df)
+        # TODO: Add outliers.
+        # TODO: Random stuff.
+        # TODO: We should tell calling layer that every thing was change so we can move back to page 1.
+        return df_result
+    else:
+        return df_unlabeled
 
 
 
