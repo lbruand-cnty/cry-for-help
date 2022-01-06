@@ -5,6 +5,8 @@ from datetime import datetime
 from flask import Flask, request
 from flask_cors import cross_origin
 from flask_restful import Api
+from typing import Dict
+
 import ml_api
 from srcs import utils
 
@@ -269,24 +271,27 @@ def sample_data(project_name):
     print(f" len(df_test) = {len(df_test)}")
     print(f" len(df_unlabeled) = {len(df_unlabeled)}")
 
+    sample, rest = sample_unlabeled_data(df_unlabeled, df_train, df_test, labels)
+    reset_page = (len(sample) != 0)
     df = pd.concat(
         [
-            *list(sample_unlabeled_data(df_unlabeled, df_train, df_test, labels)),
+            sample,
+            rest,
             # TODO : This needs to be done using the model + sampling + oultliers.
             df_train,
             df_test
         ])
     df.to_csv(os.path.join(PROJECT_DIR, project_name, 'data.csv'), index=False)
-    return {'success': True}, 200, {'ContentType': 'application/json'}
+    return {'success': True, 'reset_page': reset_page}, 200, {'ContentType': 'application/json'}
 
 
-def sample_unlabeled_data(df_unlabeled: pd.DataFrame, df_train: pd.DataFrame, df_test: pd.DataFrame, label_list: list[str]): # TODO : move this ml_api.
+def sample_unlabeled_data(df_unlabeled: pd.DataFrame, df_train: pd.DataFrame, df_test: pd.DataFrame, label_list: list[str]) -> tuple[pd.DataFrame]: # TODO : move this ml_api.
     global mlapi
     print(" == sample_unlabeled_data ==")
     if mlapi is None:
         mlapi = ml_api.MLApi()
         # TODO : There is a need to change this when we change the list of labels in the project.
-        label_index: dict[str, int]= dict(list([ (v, k) for k, v in enumerate(label_list)]))
+        label_index: Dict[str, int] = dict(list([(v, k) for k, v in enumerate(label_list)]))
         mlapi = ml_api.MLApi(labels_index=label_index,
                              num_labels=2,
                              )
@@ -297,13 +302,12 @@ def sample_unlabeled_data(df_unlabeled: pd.DataFrame, df_train: pd.DataFrame, df
         mlapi.train_model(training_data=df_train,
                           test_data=df_test,)
         df = df_unlabeled.sample(frac=1).reset_index(drop=True)
-        df_result = mlapi.get_low_conf_unlabeled(df)
         # TODO: Add outliers.
         # TODO: Random stuff.
         # TODO: We should tell calling layer that every thing was change so we can move back to page 1.
-        return df_result
+        return mlapi.get_low_conf_unlabeled(df)
     else:
-        return df_unlabeled
+        return (pd.DataFrame(), df_unlabeled)
 
 
 

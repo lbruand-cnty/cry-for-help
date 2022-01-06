@@ -119,7 +119,9 @@ def label_data(keypressed=''):
     """
     def submit_verify(updates):
         queue = 'test' # TODO: this should be set depending on the phase of the project we are in.
-        app_utils.update_label_data(updates)
+        reset_page = app_utils.update_label_data(updates)
+        if reset_page:
+            st.session_state.current_page = 0
 
     labels = st.session_state.project_info['label']
     label_shortcuts = st.session_state.project_info['label_shortcut']
@@ -139,7 +141,7 @@ def label_data(keypressed=''):
     # capture any changes to the label checkboxes
 
 
-    new_labels = [labels[i] for i in range(len(labels)) if checkboxes[i] ]
+    new_labels = [ labels[i] for i in range(len(labels)) if checkboxes[i] ]
     # display a submit button if any label checkboxes is changed
     if set(new_labels) != set(current_label):
         st.button('Verify', key='button_submit_label_data',

@@ -148,7 +148,7 @@ def load_projects(url: str = None) -> List[str]:
     return r.json()['projects']
 
 
-def update_label_data(new_labels: List[str], url: str = None):
+def update_label_data(new_labels: List[str], url: str = None) -> bool:
     """
     Send a put request to update the labels of the labeled data.
 
@@ -187,15 +187,16 @@ def update_label_data(new_labels: List[str], url: str = None):
 
     r = requests.put(url, data=json.dumps(data), headers=headers)
 
-    # TODO : retrain/shuffle data if need be (do not do that everytime).
-    sample_data()
+
+    reset_page = sample_data()
 
     # update label and progress status into session state
 
     st.session_state.data = get_data()
     st.session_state.project_info['progress'] = new_progress
+    return reset_page
 
-def sample_data(url: str =None):
+def sample_data(url: str =None) -> bool:
     headers = {
         'content-type': 'application/json',
         'Accept-Charset': 'UTF-8',
@@ -206,6 +207,9 @@ def sample_data(url: str =None):
     url = f'{url}/{st.session_state.current_project}'
     r = requests.post(url, data=json.dumps(st.session_state.project_info),
                       headers=headers)
+    result = r.json()
+    return result["reset_page"]
+
 
 def update_project_info(url: str = None):
     """

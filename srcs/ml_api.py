@@ -51,7 +51,7 @@ class MLApi:
                 vec[feature_index[feature]] += 1
         return vec.view(1, -1)
 
-    def get_low_conf_unlabeled(self, unlabeled_data, number=80, limit=10000):
+    def get_low_conf_unlabeled(self, unlabeled_data, number=80, limit=10000) -> tuple[pd.DataFrame]:
         confidences = []
         if limit == -1:  # we're predicting confidence on *everything* this will take a while
             print("Get confidences for unlabeled data (this might take a while)")
