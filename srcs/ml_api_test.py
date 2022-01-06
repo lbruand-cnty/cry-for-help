@@ -1,3 +1,4 @@
+import math
 import unittest
 import ml_api
 import pandas as pd
@@ -18,10 +19,11 @@ class MLAPITest(unittest.TestCase):
 
     def test_make_feature_vector(self):
         mlapi = ml_api.MLApi()
-        text_split = "hello Programmation".split()
+        text_split = [ "hello Programmation".split(), "hello informatique".split() ]
         feature_index = {'hello': 0, 'Programmation': 1, 'et': 2, 'développement': 3, 'informatique': 4}
-        feature_vector = mlapi.make_feature_vector(text_split, feature_index)
-        self.assertEqual(1, len(feature_vector))
+        feature_vectors = mlapi.make_feature_vector(text_split, feature_index)
+        self.assertEqual( (2, 5), feature_vectors.shape)
+        self.assertEqual(4, torch.sum(feature_vectors))
 
 
     def test_train_model(self):
@@ -38,6 +40,22 @@ class MLAPITest(unittest.TestCase):
                           test_data=df_test,
                           )
         self.assertIsNotNone(mlapi.model)
+    def test_confidence(self):
+        def run(prob_related):
+            if prob_related < 0.5:
+                confidence = 1 - prob_related
+            else:
+                confidence = prob_related
+            return confidence
+
+        def run2(prob_related):
+            return abs(prob_related - 0.5) + 0.5
+
+        def test_at_value(x):
+            self.assertEqual(run(x), run2(x))
+
+        for x in [0., 0.25, 0.5, .75, 1.0]:
+            test_at_value(x)
 
     def test_low_confidence(self):
         feature_index = {'hello': 0, 'Programmation': 1, 'et': 2, 'développement': 3, 'informatique': 4}

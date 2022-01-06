@@ -1,5 +1,5 @@
 import json
-from typing import Tuple, List
+from typing import Tuple, List, Dict
 
 import torch
 import torch.nn as nn
@@ -49,17 +49,20 @@ class MLApi:
         self.vocab_size = len(feature_index)
         return feature_index
 
-    def make_feature_vector(self, features, feature_index):
-        vec = torch.zeros(len(feature_index))
-        for feature in features:
-            if feature in feature_index:
-                vec[feature_index[feature]] += 1
-        return vec.view(1, -1)
+    def make_feature_vector(self, features :List[List[str]], feature_index: Dict[str, int]) -> torch.Tensor:
+        vec = torch.zeros(len(features), len(feature_index))
+        for ix, line in enumerate(features):
+            for feature in line:
+                if feature in feature_index:
+                    vec[ix, feature_index[feature]] += 1
+        return vec.view(len(features), -1)
 
     def get_low_conf_unlabeled(self, unlabeled_data, number=80, limit=10000) -> (pd.DataFrame, pd.DataFrame):
         confidences = []
         if limit == -1:  # we're predicting confidence on *everything* this will take a while
             print("Get confidences for unlabeled data (this might take a while)")
+            unlabeled_data_limited = unlabeled_data
+            rest = pd.DataFrame()
         else:
             # only apply the model to a limited number of items
             unlabeled_data = unlabeled_data.sample(frac=1).reset_index(drop=True)
@@ -68,21 +71,13 @@ class MLApi:
 
 
         with torch.no_grad():
-            for item in self.project_to_inputs(unlabeled_data_limited).to_list():
-                text = item
-                # TODO : This should be do over the unlabeled set in batching.
-                feature_vector = self.make_feature_vector(text.split(), self.feature_index)
-                log_probs = self.model(feature_vector)
+            feature_vectors = []
+            split_items = [ item.split() for item in self.project_to_inputs(unlabeled_data_limited).to_list() ]
 
-                # get confidence that it is related
-                prob_related = math.exp(log_probs.data.tolist()[0][1])  # TODO : This is not working really.
-
-                if prob_related < 0.5:
-                    confidence = 1 - prob_related
-                else:
-                    confidence = prob_related
-
-                confidences.append(confidence)
+            feature_vectors = self.make_feature_vector(split_items, self.feature_index)
+            log_probs = self.model(feature_vectors)
+            half_tensor = 0.5 * torch.ones(log_probs.shape)
+            confidences = torch.mean(torch.abs(log_probs - half_tensor) + half_tensor, dim=1)
 
         unlabeled_data_limited["confidence"] = confidences
         unlabeled_data_limited.sort_values(by=["confidence"], inplace=True)
@@ -150,7 +145,8 @@ class MLApi:
         return tuple(list([self.remove_middle_dim(self.extract_tensor_from_series(*input)) for input in inputs]))
 
     def extract_tensor_from_series(self, index, series, split_char) -> torch.Tensor:
-        return torch.stack([self.make_feature_vector(item.split(split_char), index) for item in series.to_list()])
+        series_list = [ item.split(split_char) for item in series.to_list() ]
+        return self.make_feature_vector(series_list, index)
 
     def remove_middle_dim(self, x):
         return torch.reshape(x, (x.shape[0], x.shape[-1]))
@@ -175,5 +171,5 @@ class Net(nn.Module):
 
     def forward(self, x):
         x = torch.sigmoid(self.linear1(x))
-        x = self.linear2(x)
+        x = torch.sigmoid(self.linear2(x))
         return x
