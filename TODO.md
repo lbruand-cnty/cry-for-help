@@ -5,10 +5,11 @@
  - [x] Sort order of examples. (?)
  - [x] project state --> When goes labelled stuff into train or test ? (modify verified ?)
  - [x] retrain every nth times.
+ - [x] *Have a modelling view. (like label studio)*
 
 ## TODO
 
- - [ ] *Have a modelling view. (like label studio)*
+ - [ ] Security concern : We have a Jinja template that's loaded in the database and the GUI : Code injection.
  - [ ] Add statistics on number of train/test. Accuracy of the model.- 
  - [ ] CSV ==> Sqlite/SQLModel/sqlalchemy 
  - [ ] Flask ==> Fastapi
