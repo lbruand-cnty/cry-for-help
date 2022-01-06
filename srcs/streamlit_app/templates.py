@@ -150,7 +150,7 @@ def text_data_html(text: str, template: str) -> str:
     """
     t = jinja2.Template(template)
     json_text = json.loads(text)
-    rendered_text = t.render(**json_text)
+    rendered_text = t.render(texts=json_text)
     return f"""
         <div style="{style}">
             {rendered_text}
