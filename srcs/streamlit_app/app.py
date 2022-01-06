@@ -56,6 +56,8 @@ def main():
                      unsafe_allow_html=True)
             # project description text area
             widgets.project_description()
+            # project view_template text area
+            widgets.project_view_template()
             # placeholder to display the labelling progress
             progress_holder = st.empty()
             # placeholder to display list of labels
@@ -66,8 +68,8 @@ def main():
             widgets.delete_label()
 
             # import data
-            file, add_data, text_column = widgets.import_data()
-            app_utils.add_texts(file, add_data, text_column)
+            file, add_data, text_columns = widgets.import_data()
+            app_utils.add_texts(file, add_data, text_columns)
             # export data
             download_placeholder = widgets.export_data()
 
@@ -92,7 +94,7 @@ def main():
             if data['total'] > 0:
                 st.write(templates.page_number_html(st.session_state.current_project, current_page, data['total']),
                          unsafe_allow_html=True)
-                st.write(templates.text_data_html(data['text']), unsafe_allow_html=True)
+                st.write(templates.text_data_html(text=data['text'], template=st.session_state.project_info["view_template"]), unsafe_allow_html=True)
                 # display checkboxes for labeling
                 if len(st.session_state.project_info['label']) > 0:
                     widgets.label_data(keypressed)

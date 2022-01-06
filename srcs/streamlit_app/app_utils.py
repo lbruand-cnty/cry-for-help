@@ -10,7 +10,7 @@ from datetime import datetime
 from srcs import utils
 
 
-def add_texts(df: pd.DataFrame, add_data: bool, text_column: str,
+def add_texts(df: pd.DataFrame, add_data: bool, text_columns: List[str],
               url: str = None):
     """
     Send a put request to add text data to a project.
@@ -18,7 +18,7 @@ def add_texts(df: pd.DataFrame, add_data: bool, text_column: str,
     Args:
         df (pd.DataFrame): Loaded csv.
         add_data (bool): New data will be added if True (clicked "Import" button).
-        text_column (str): Name of the column containing text data.
+        text_columns (list[str]): Name of the column containing text data.
         url (str, optional): API address.
     """
     headers = {
@@ -29,8 +29,9 @@ def add_texts(df: pd.DataFrame, add_data: bool, text_column: str,
         url = os.environ['API_ADDRESS'] + os.environ['ADD_DATA']
 
     url = f'{url}/{st.session_state.current_project}'
-    if add_data and df is not None and text_column is not None:
-        new_data = {'texts': df[text_column].to_list()}
+    if add_data and df is not None and text_columns is not None:
+        extract_texts = df[text_columns].apply(lambda x: x.to_json(), axis=1).to_list()
+        new_data = {'texts': extract_texts}
         r = requests.put(url, data=json.dumps(new_data), headers=headers)
         # update progress in session state if it is None
         if st.session_state.project_info['progress'] is None:

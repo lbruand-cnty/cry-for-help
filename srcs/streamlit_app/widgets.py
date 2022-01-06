@@ -151,22 +151,42 @@ def label_data(keypressed=''):
 def import_data():
     """
     An expander widget to import data. Click to select file or drag a file into
-    the box then select a desired column containing the data and finally click
+    the box then select a desired columns containing the data and finally click
     "Import" button to import the data to a project.
     """
     with st.expander('Import data'):
         file = st.file_uploader(label='Upload your csv file here.')
         if file is not None:
             df = pd.read_csv(file)
-            # select the column containing the texts to be labelled
-            column = st.radio('Column containing the texts', list(df.columns))
+            # select the columns containing the texts to be labelled
+
+            columns = st.multiselect(label='Columns containing the texts', options=list(df.columns))
             _add = st.button('Import', key='button_submit_add_data')
             file = df
         else:
-            _add, column = None, None
+            _add, columns = None, None
 
-    return file, _add, column
+    return file, _add, columns
 
+
+def project_view_template():
+    """
+    Text area for displaying and changing the project description. Click on the
+    text area to start modify the project description then press the Ctrl+Enter
+    buttons, after that click the "Save" button to save the project description.
+    """
+    def submit_save(text):
+        st.session_state.project_info['view_template'] = text
+        app_utils.update_project_info()
+
+    view_template = st.session_state.project_info['view_template']
+    # project description text area height
+    text_area_height = (len(view_template) + 42 - 1) // 42 * 30
+    new_view_template = st.text_area('new_view_template', value=view_template, height=text_area_height)
+    # display a button to save new description if the description is changed
+    if new_view_template != view_template:
+        st.button('Save', key='button_save_view_template', on_click=submit_save,
+                  args=(new_view_template, ))
 
 def project_description():
     """
@@ -181,7 +201,7 @@ def project_description():
     description = st.session_state.project_info['description']
     # project description text area height
     text_area_height = (len(description) + 42 - 1) // 42 * 30
-    new_description = st.text_area('', value=description, height=text_area_height)
+    new_description = st.text_area('new_description', value=description, height=text_area_height)
     # display a button to save new description if the description is changed
     if new_description != description:
         st.button('Save', key='button_save_description', on_click=submit_save,

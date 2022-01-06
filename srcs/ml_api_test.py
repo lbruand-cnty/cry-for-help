@@ -8,10 +8,11 @@ class MLAPITest(unittest.TestCase):
         mlapi = ml_api.MLApi()
         df = pd.read_csv("../test_data/data.csv", dtype=str)
         df_train = df[df.queue == "train"]
-        df_test = df[df.queue == "test"]
+
         df_unlabeled = df[~df.queue.isin(["train", "test"])]
 
-        result = mlapi.create_features(df_unlabeled['texts'].to_list(), df_train['texts'].to_list(), minword=1)
+
+        result = mlapi.create_features(df_input=pd.concat([df_unlabeled, df_train]), minword=1)
         print(result)
         self.assertEqual(7, len(result))
 

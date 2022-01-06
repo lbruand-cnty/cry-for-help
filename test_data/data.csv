@@ -1,6 +1,6 @@
-texts,verified,label,queue
-"hello",0,,
-"hallo",0,,
-Programmation et développement informatique,2022-01-03 19:06,GRAIT,train
-Programmation et développement informatique Chaman,2022-01-03 19:06,GRAIT,train
-"Coaching d'entreprise et individuel professionnel, Formation management/RPS/Risque professionnels et domaines techniques divers, préparation aux concours, accompagnement insertion (bilan de compétences, VAE, préparation entretien), conseils aux entreprises pour les marchés publics, accompagnement d'associations dans la gestion administrative, prestations de services diverses en conseil et gestion de projets",2022-01-03 18:42,GRAIT,test
+,texts,verified,label,queue
+0,"{""activity_description"": ""hello""}",0,,
+1,"{""activity_description"": ""hallo""}",0,,
+2,"{""activity_description"": ""Programmation et d\u00e9veloppement informatique""}",2022-01-03 19:06,GRAIT,train
+3,"{""activity_description"": ""Programmation et d\u00e9veloppement informatique Chaman""}",2022-01-03 19:06,GRAIT,train
+4,"{""activity_description"": ""Coaching d'entreprise et individuel professionnel, Formation management/RPS/Risque professionnels et domaines techniques divers, pr\u00e9paration aux concours, accompagnement insertion (bilan de comp\u00e9tences, VAE, pr\u00e9paration entretien), conseils aux entreprises pour les march\u00e9s publics, accompagnement d'associations dans la gestion administrative, prestations de services diverses en conseil et gestion de projets""}",2022-01-03 18:42,GRAIT,test

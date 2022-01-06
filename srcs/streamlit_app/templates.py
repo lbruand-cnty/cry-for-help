@@ -1,5 +1,6 @@
+import json
 from typing import List
-
+import jinja2
 
 def label_list_html(labels: List[str]) -> str:
     """ HTML scripts to display a list of labels. """
@@ -137,7 +138,7 @@ def save_csv_html(filename: str, csv: str) -> str:
     """
 
 
-def text_data_html(text: str) -> str:
+def text_data_html(text: str, template: str) -> str:
     """ HTML scripts to display text to be labelled. """
     style = """
         border: none;
@@ -147,9 +148,12 @@ def text_data_html(text: str) -> str:
         height: auto;
         box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
     """
+    t = jinja2.Template(template)
+    json_text = json.loads(text)
+    rendered_text = t.render(**json_text)
     return f"""
         <div style="{style}">
-            {text}
+            {rendered_text}
         </div>
     """
 

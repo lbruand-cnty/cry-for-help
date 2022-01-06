@@ -1,3 +1,6 @@
+import json
+from typing import Tuple, List
+
 import torch
 import torch.nn as nn
 import pandas as pd
@@ -21,12 +24,14 @@ class MLApi:
         self.vocab_size = vocab_size
 
 
-    def create_features(self, df_unlabeled, df_train, minword=3):
+    def create_features(self, df_input: pd.DataFrame, minword=3):
         """Create indexes for one-hot encoding of words in files
 
         """
+        # TODO : There might be a bug here : we have dataframe as inputs and we are not extracting the text.
         total_training_words = {}
-        for item in df_unlabeled + df_train:
+        df_input_text: List[str] = self.project_to_inputs(df_input).to_list()
+        for item in df_input_text:
             text = item
             for word in text.split():
                 if word not in total_training_words:
@@ -35,7 +40,7 @@ class MLApi:
                     total_training_words[word] += 1
 
         feature_index = {}
-        for item in df_unlabeled + df_train:
+        for item in df_input_text:
             text = item
             for word in text.split():
                 if word not in feature_index and total_training_words[word] >= minword:
@@ -51,7 +56,7 @@ class MLApi:
                 vec[feature_index[feature]] += 1
         return vec.view(1, -1)
 
-    def get_low_conf_unlabeled(self, unlabeled_data, number=80, limit=10000) -> tuple[pd.DataFrame]:
+    def get_low_conf_unlabeled(self, unlabeled_data, number=80, limit=10000) -> (pd.DataFrame, pd.DataFrame):
         confidences = []
         if limit == -1:  # we're predicting confidence on *everything* this will take a while
             print("Get confidences for unlabeled data (this might take a while)")
@@ -63,11 +68,8 @@ class MLApi:
 
 
         with torch.no_grad():
-            for idx, item in unlabeled_data_limited.iterrows():
-                #textid = item[0]
-                #item[3] = "random_remaining"
-                print(item)
-                text = item.texts
+            for item in self.project_to_inputs(unlabeled_data_limited).to_list():
+                text = item
                 # TODO : This should be do over the unlabeled set in batching.
                 feature_vector = self.make_feature_vector(text.split(), self.feature_index)
                 log_probs = self.model(feature_vector)
@@ -80,8 +82,6 @@ class MLApi:
                 else:
                     confidence = prob_related
 
-                #item[3] = "low confidence"
-                #item[4] = confidence
                 confidences.append(confidence)
 
         unlabeled_data_limited["confidence"] = confidences
@@ -90,7 +90,13 @@ class MLApi:
 
         return unlabeled_data_limited, rest
 
-    def train_model(self, training_data, test_data=None):
+    def project_to_inputs(self, unlabeled_data_limited): # We should make that configuration templatable/migrate into model
+        inputs = unlabeled_data_limited.texts
+        def project(x):
+            return json.loads(x)["activity_description"]
+        return inputs.apply(project)
+
+    def train_model(self, training_data: pd.DataFrame, test_data: pd.DataFrame =None):
         """Train model on the given training_data
 
         Tune with the validation_data
@@ -136,15 +142,15 @@ class MLApi:
 
                 print(f"epoch {epoch}, train train_loss : {train_loss.item()}, test train_loss : {test_loss}")
 
-    def build_tensors(self, data):
+    def build_tensors(self, data: pd.DataFrame):
         inputs = [
-            (self.feature_index, data.texts, " "),
+            (self.feature_index, self.project_to_inputs(data), " "),
             (self.labels_index, data.label, ",")
         ]
         return tuple(list([self.remove_middle_dim(self.extract_tensor_from_series(*input)) for input in inputs]))
 
     def extract_tensor_from_series(self, index, series, split_char) -> torch.Tensor:
-        return torch.stack([self.make_feature_vector(text.split(split_char), index) for text in series.to_list()])
+        return torch.stack([self.make_feature_vector(item.split(split_char), index) for item in series.to_list()])
 
     def remove_middle_dim(self, x):
         return torch.reshape(x, (x.shape[0], x.shape[-1]))

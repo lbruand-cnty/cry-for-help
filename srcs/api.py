@@ -159,6 +159,7 @@ def inner_get_project_info(project_name):
         'project': project_name,
         'createDate': selected_df.createDate[0],
         'description': selected_df.description[0],
+        'view_template': selected_df.view_template[0],
         'label': label,
         'label_shortcut': label_shortcut,
         'progress': progress,
@@ -201,6 +202,9 @@ def create_project(project_name: str):
         'project': [project_name],
         'createDate': [str(datetime.now()).split('.')[0][:-3]],
         'description': ['Add description at here.'],  # default description
+        'view_template': """{% for item in texts -%}
+    {{ item }}
+{%- endfor %}""",
         'label': None,  # default label
         'label_shortcut': None
     }
@@ -285,7 +289,7 @@ def sample_data(project_name):
     return {'success': True, 'reset_page': reset_page}, 200, {'ContentType': 'application/json'}
 
 
-def sample_unlabeled_data(df_unlabeled: pd.DataFrame, df_train: pd.DataFrame, df_test: pd.DataFrame, label_list: list[str]) -> tuple[pd.DataFrame]: # TODO : move this ml_api.
+def sample_unlabeled_data(df_unlabeled: pd.DataFrame, df_train: pd.DataFrame, df_test: pd.DataFrame, label_list: list[str]) -> (pd.DataFrame, pd.DataFrame): # TODO : move this ml_api.
     global mlapi
     print(" == sample_unlabeled_data ==")
     if mlapi is None:
@@ -293,12 +297,11 @@ def sample_unlabeled_data(df_unlabeled: pd.DataFrame, df_train: pd.DataFrame, df
         # TODO : There is a need to change this when we change the list of labels in the project.
         label_index: Dict[str, int] = dict(list([(v, k) for k, v in enumerate(label_list)]))
         mlapi = ml_api.MLApi(labels_index=label_index,
-                             num_labels=2,
+                             num_labels=len(label_index),
                              )
-        mlapi.create_features(df_unlabeled=df_unlabeled, df_train=df_train)
+        mlapi.create_features(df_input=pd.concat( [df_unlabeled, df_train ] ))
     RETRAIN_EVERYN_VALUE = 5 # TODO: This should go in the configuration.
-    if len(df_train) % RETRAIN_EVERYN_VALUE == 0:
-        # TODO : Train every n labels.
+    if len(df_train) % RETRAIN_EVERYN_VALUE == 0 and len(df_test) >= 10 and len(df_train) >= 30:  # TODO This should go in the configuration of the project
         mlapi.train_model(training_data=df_train,
                           test_data=df_test,)
         df = df_unlabeled.sample(frac=1).reset_index(drop=True)
@@ -320,6 +323,7 @@ def update_project_info(project_name):
         'project': Project name, str,
         'createDate': Project creation datetime, str,
         'description': Project description, str,
+        'view_template': Project template, str,
         'label': List of defined labels, List[str],
         'label_shortcut': List of defined labels, List[str],
     }
@@ -329,11 +333,13 @@ def update_project_info(project_name):
     """
     new_info = request.get_json()
     new_description = new_info['description']
+    new_view_template = new_info['view_template']
     new_label = ':sep:'.join(new_info['label'])
     new_label_shortcuts = ':sep:'.join(new_info['label_shortcut'])
     df = pd.read_csv(os.path.join(PROJECT_DIR, 'projects.csv'))
     id = df.project == project_name
     df.loc[id, 'description'] = new_description
+    df.loc[id, 'view_template'] = new_view_template
     df.loc[id, 'label'] = new_label
     df.loc[id, 'label_shortcut'] = new_label_shortcuts
     df.to_csv(os.path.join(PROJECT_DIR, 'projects.csv'), index=False)
