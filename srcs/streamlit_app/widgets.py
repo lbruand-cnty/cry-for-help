@@ -126,7 +126,7 @@ def label_data(keypressed=''):
     labels = st.session_state.project_info['label']
     label_shortcuts = st.session_state.project_info['label_shortcut']
     current_label = st.session_state.data['label']
-    st.write(f"{current_label}")  # an empty line to make spacing
+    st.write("")  # an empty line to make spacing
 
     checkboxes = []
     for label, shortcut in zip(labels, label_shortcuts):
