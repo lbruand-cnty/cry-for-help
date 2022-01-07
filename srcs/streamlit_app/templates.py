@@ -76,7 +76,6 @@ def progress_bar_html(labeled_proportion: str, counts: Dict[str, float]) -> str:
     """
 
     bufferbars = []
-    print(counts)
     colors = {
         "unlabeled": "rgb(128, 240, 240)",
         "train" : "rgb(128, 128, 240)",
