@@ -211,7 +211,7 @@ def create_project(project_name: str):
         'project': [project_name],
         'createDate': [str(datetime.now()).split('.')[0][:-3]],
         'description': ['Add description at here.'],  # default description
-        'view_template': """{% for item in texts -%}
+        'view_template': """{% for item in texts %}
     {{ item }}
 {%- endfor %}""",
         'label': None,  # default label
