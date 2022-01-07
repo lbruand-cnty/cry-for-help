@@ -63,7 +63,7 @@ def page_number_html(current_project: str, current_page: int,
     return html
 
 
-def progress_bar_html(labeled_proportion: str, counts: Dict[str, float]) -> str:
+def progress_bar_html(counts: Dict[str, float]) -> str:
     """ HTML scripts to display progress of labelling in percentage. """
     sub_header_style = """
         font-size: 115%;

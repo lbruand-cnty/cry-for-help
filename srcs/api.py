@@ -97,8 +97,14 @@ def get_data(project_name: str, current_page: int):
     """
     try:
         df = pd.read_csv(os.path.join(PROJECT_DIR, project_name, 'data.csv'))
+
         count = { f"total_{k}":v for k, v in df.fillna("unlabeled").groupby('queue')['queue'].count().items() }
-        total = sum(count.values())
+
+        for queue in ["unlabeled", "train", "test"]:
+            if not f"total_{queue}" in count:
+                count[f"total_{queue}"] = 0
+        total = len(df)
+        print(total)
         current_page = min(total - 1, current_page)
         text = df.texts.iloc[current_page]
         verified = str(df.verified.iloc[current_page])
