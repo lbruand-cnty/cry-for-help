@@ -1,5 +1,5 @@
 import json
-from typing import List
+from typing import List, Dict
 import jinja2
 
 def label_list_html(labels: List[str]) -> str:
@@ -63,7 +63,7 @@ def page_number_html(current_project: str, current_page: int,
     return html
 
 
-def progress_bar_html(labeled_proportion: str) -> str:
+def progress_bar_html(labeled_proportion: str, counts: Dict[str, float]) -> str:
     """ HTML scripts to display progress of labelling in percentage. """
     sub_header_style = """
         font-size: 115%;
@@ -72,34 +72,55 @@ def progress_bar_html(labeled_proportion: str) -> str:
         margin-bottom: 0.3em;
     """
     container_style = """
-        background-color: rgb(240, 240, 240);
-        border-radius: 5px;
         width: 100%;
     """
-    progress_bar_style = f"""
-        background-color: rgb(246, 51, 102);
-        height: 10px;
-        border-radius: 5px;
-        width: {labeled_proportion}%;
-    """
-    percent_style = f"""
-        text-align: right;
-        margin-bottom: 0.8em;
-        font-size: 90%;
-        width:{labeled_proportion}%;
-    """
-    return f"""
-        <div style="{sub_header_style}">
-            Verified
-        </div>
-        <div style="{container_style}">
-            <div style="{progress_bar_style}">
-            </div>
-        </div>
-        <div style="{percent_style}">
-            {labeled_proportion}%
-        </div>
-    """
+
+    bufferbars = []
+    print(counts)
+    colors = {
+        "unlabeled": "rgb(128, 240, 240)",
+        "train" : "rgb(128, 128, 240)",
+        "test" : "orange"
+    }
+    texts = generate_labels(colors)
+
+    bars = build_bars(bufferbars, colors, container_style, counts)
+
+    sb = []
+    for i, color in colors.items():
+        sb.append(f"""<span style="font-size: 115%;
+                font-weight: 450;
+                margin-top: 0.3em;
+                margin-bottom: 0.3em;
+                color:{color}">{counts[f"total_{i}"]}%</span>""")
+    percents = "<div>" + " / ".join(sb) + "</div>"
+    return texts + bars + percents
+
+
+def generate_labels(colors):
+    sb = []
+    for i, color in colors.items():
+        sb.append(f"""<span style="font-size: 115%;
+        font-weight: 450;
+        margin-top: 0.3em;
+        margin-bottom: 0.3em;
+        color:{color}">{i}</span>""")
+    texts = "<div>" + " / ".join(sb) + "</div>"
+    return texts
+
+
+def build_bars(bufferbars, colors, container_style, counts):
+    for i in colors.keys():
+        labeled_proportion = counts[f"total_{i}"]
+        color = colors[i]
+        progress_bar_style = f"""
+            background-color: {color};
+            height: 10px;
+            width: {labeled_proportion}%;            
+            display: inline-block;
+        """
+        bufferbars.append(f"""<div style="{progress_bar_style}"></div>""")
+    return f"""<div style="{container_style}">""" + "".join(bufferbars) + "</div>"
 
 
 def save_csv_html(filename: str, csv: str) -> str:

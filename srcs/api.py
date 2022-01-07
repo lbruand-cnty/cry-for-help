@@ -97,7 +97,8 @@ def get_data(project_name: str, current_page: int):
     """
     try:
         df = pd.read_csv(os.path.join(PROJECT_DIR, project_name, 'data.csv'))
-        total = len(df)  # TODO : This should be a project wide info
+        count = { f"total_{k}":v for k, v in df.fillna("unlabeled").groupby('queue')['queue'].count().items() }
+        total = sum(count.values())
         current_page = min(total - 1, current_page)
         text = df.texts.iloc[current_page]
         verified = str(df.verified.iloc[current_page])
@@ -116,6 +117,7 @@ def get_data(project_name: str, current_page: int):
         'verified': verified,
         'queue': queue,
         'label': label,
+        **count
     }
 
 @app.route(f'{API_ENDPOINTS["GET_PROJECT_INFO"]}/<project_name>', methods=['GET'])

@@ -118,10 +118,14 @@ def main():
         )
         # display progress bar if there is data (not None)
         if st.session_state.project_info['progress'] is not None:
+
+            total = st.session_state.data["total"]
+            counts = { k: f'{ v / total * 100:.2f}' for k, v  in st.session_state.data.items() if k.startswith("total_")}
+
             progress = int(st.session_state.project_info["progress"])
-            progress = f'{progress / st.session_state.data["total"] * 100:.2f}'
+            progress = f'{progress / total * 100:.2f}'
             progress_holder.write(
-                templates.progress_bar_html(progress), unsafe_allow_html=True,
+                templates.progress_bar_html(progress, counts=counts), unsafe_allow_html=True,
             )
         # display a download button upon clicking the export button
         if st.session_state.download is not None:
