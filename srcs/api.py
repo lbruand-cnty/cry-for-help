@@ -107,6 +107,7 @@ def get_data(project_name: str, current_page: int):
         label = [] if label == 'nan' else label.split(':sep:')
     except FileNotFoundError:
         total = 0
+        count = {}
         text = None
         verified = None
         queue = None
